@@ -31,8 +31,12 @@
 #include <sniffer.h>
 #include "pio/samd21e17a.h"
 #include "instance/port.h"
+#include "core_cmFunc.h"
 #include "led.h"
 #include "uart.h"
+#include "../../../../../Programy_na_uczelnie/Atmel Toolchain/ARM GCC/Native/4.8.1443/CMSIS_Atmel/Device/ATMEL/samd21/include/instance/eic.h"
+#include "../../../../../Programy_na_uczelnie/Atmel Toolchain/ARM GCC/Native/4.8.1443/CMSIS_Atmel/Device/ATMEL/samd21/include/component/eic.h"
+#include "instance/eic.h"
 
 void Sniffer(void)
 {
@@ -65,7 +69,7 @@ void Sniffer(void)
 						default:
 							break;
 					}
-					if (UART_data_incoming())
+					if (UART1_data_incoming())
 					{
 						CurrentState = DETECT_FRAME;
 					}
@@ -140,27 +144,43 @@ void delayMs(int miliseconds)
 	}
 }
 
+void write(void)
+{
+	SERCOM1->USART.DATA.reg = "1";
+}
+
 int main (void)
 {
 	system_init();
+	__enable_irq();
 	//Sniffer();
-	UART_init(9600);
+	UART1_init(9600);
+	//UART3_init(9600);
 	set_led(1, 1, 1, 1);
+	//PORT->Group[0].PINCFG[0].bit.PMUXEN = 1;
+	//PORT->Group[0].PMUX[0].reg |= PORT_PMUX_PMUXE_D;
+	system_interrupt_enable(SERCOM1_IRQn);
 	delayMs(1000);
 	
 	while(1)
 	{
-		if (UART_data_incoming())
+		set_led(0, 0, 0, 1);
+		delayMs(2000);
+		//char character = "18535\0";
+		//UART1_write_str(character);
+		//REG_EIC_INTENSET = EIC_INTENSET_EXTINT0;
+		//write();
+		//REG_EIC_INTFLAG = EIC_INTFLAG_EXTINT0;
+		set_led(0, 0, 0, 0);
+		delayMs(2000);
+		
+		if (UART1_data_incoming())
 		{
-			set_led(1, 0, 1, 0);
-			char character = UART_read();
-			UART_write_str(character);
+			set_led(1, 1, 1, 1);
+			char c = UART1_read();
+			UART1_write_str(c);
+			delayMs(2000);
 		}
-		else
-		{
-			set_led(0, 0, 0, 1);
-			char character = 1;
-			UART_write_str(character);
-		}
+		
 	}
 }
